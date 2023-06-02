@@ -4,9 +4,56 @@
 #include <json-c/json.h>
 #include <string.h>    // strcat 함수가 선언된 헤더 파일
 #include <stdlib.h>    // malloc, free 함수가 선언된 헤더 파일
-
+#include <time.h>
 
 char* baseUrl = "https://nginx-nginx-r8xoo2mleehqmty.sel3.cloudtype.app/rate/";
+
+char* fileName_String() {
+    char file_name[20] = "";
+    struct tm* t;
+    time_t base = time(NULL);
+    t = localtime(&base);
+    
+    int year = t->tm_year + 1900;
+    int month = t->tm_mon + 1;
+    int day = t->tm_mday;
+    
+    char year_string[10];
+    char month_string[10];
+    char day_string[10];
+
+    //sprintf(year_string, "%s", year);
+    //sprintf(month_string, "%s", month);
+    //sprintf(day_string, "%s", day);
+    
+    _itoa(year, year_string, 10);
+    _itoa(month, month_string, 10);
+    _itoa(day, day_string, 10);
+   
+
+    strcat(file_name, year_string);
+    strcat(file_name, month_string);
+    strcat(file_name, day_string);
+    strcat(file_name, ".json");
+
+
+
+    printf("%s\n", file_name);
+
+    return file_name;
+
+    
+}
+
+void save_jobjFile(char * jsonData) {
+    char *file_name= NULL;
+    file_name= fileName_String();
+    printf("%s\n", file_name);
+
+    //FILE* fp = fopen(fileName_String(), "w"); //test파일을 w(쓰기) 모드로 열기
+    //fputs(jsonData,fp);
+    //fclose(fp);
+}
 
 size_t write_callback(char* ptr, size_t size, size_t nmemb, void* userdata) {
     size_t realsize = size * nmemb;
@@ -83,7 +130,7 @@ void exchange_api_request(char *currencyCode,char* selectCode,int money){
 
             //요청 성공시 오는 json값 글자 가져오기 위한 코드
             struct json_object* jobj = json_tokener_parse(response_buf);
-            
+
             //환율 비율 json 값 가져오기 위한 구조체
             struct json_object* exchang_rate_obj;
 
@@ -95,11 +142,21 @@ void exchange_api_request(char *currencyCode,char* selectCode,int money){
 
 
 
+            
+
+
+
+
+
             json_object_object_get_ex(jobj, "rate_data", &exchang_rate_obj);
 
             json_object_object_get_ex(exchang_rate_obj, "rates",&all_rate_obj);
             
             json_object_object_get_ex(all_rate_obj, selectCode, &rate_obj);
+
+            char *save_data_string =json_object_get_string(exchang_rate_obj);
+            
+            save_jobjFile(save_data_string);
 
             printf("환율 비율: %f\n", json_object_get_double(rate_obj));
 
