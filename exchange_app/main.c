@@ -99,7 +99,7 @@ char* targetSelectCode() {
 
 //파일이름을 현재 년월일로 저장하기위해
 //파일 이름을 만들어 주는 함수
-char* fileName_String() {
+char* fileName_String(char* currencyCode) {
     //함수가 끝나도 변수가 남아서 return 해줘야하기 때문에
     //static 정적 변수로 만들어 준다.
     char *file_name_pointer= malloc(sizeof(char) * 20);
@@ -131,6 +131,7 @@ char* fileName_String() {
     strcat(file_name, year_string);
     strcat(file_name, month_string);
     strcat(file_name, day_string);
+    strcat(file_name, currencyCode);
     strcat(file_name, ".json");
 
     //동적메모리는 포인터를 활용하므로
@@ -142,23 +143,40 @@ char* fileName_String() {
 }
 
 //환율 비율 저장하기 위한 함수
-void save_jobjFile(char * jsonData) {
+void save_jobjFile(char* jsonData,char* currencyCode) {
     char* file_name_pointer;
-    file_name_pointer = fileName_String();
-    printf("파일이름:%s\n", file_name_pointer);
+    file_name_pointer = fileName_String(currencyCode);
+    
+    //printf("파일이름:%s\n", file_name_pointer);
 
 
     FILE* fp = fopen(file_name_pointer, "w");
-    fputs(jsonData,fp);
+    fputs(jsonData, fp);
     fclose(fp);
-    
+
     //동적 메모리로 지정해 놓아서 값이 남아 있다.
     //파일 이름이 남아있으면 파일이름이 두번 찍히므로
     //파일이름 변수를 초기화 해줘야한다.
     free(file_name_pointer);
 }
+//은행에서의 수수료
+void bankFeeCal(double money,char* selectCode) {
+    
+    //은행 환전수수료율
+    //1.75%
+    double bankFeeRate = 0.0175;
+    //은행이 가져가는 수수료 변수
+    double bankFee = 0;
 
+    bankFee = money * bankFeeRate;
 
+    printf("현찰로 구매할시 계산:");
+    printf("%f ", money - bankFee);
+    printf("%s\n", selectCode);
+
+}
+
+//환율 api 호출해서 값 불러오고 가져와서 계산하는 함수
 void exchange_api_request(char *currencyCode,char* selectCode,int money){
     //printf("%s\n", currencyCode);
 
@@ -172,7 +190,7 @@ void exchange_api_request(char *currencyCode,char* selectCode,int money){
 
     strcat(url, currencyCode);
 
-    printf("baseurl:%s\n", url);
+    //printf("baseurl:%s\n", url);
     
     //요청 결과값 저장하기위한 버퍼 크기 지정
     char* response_buf = (char*)malloc(2048 * 2048);
@@ -242,7 +260,7 @@ void exchange_api_request(char *currencyCode,char* selectCode,int money){
 
             char *save_data_string =json_object_get_string(exchang_rate_obj);
             
-            save_jobjFile(save_data_string);
+            save_jobjFile(save_data_string, currencyCode);
 
             printf("환율 비율: %f\n", json_object_get_double(rate_obj));
 
@@ -252,12 +270,12 @@ void exchange_api_request(char *currencyCode,char* selectCode,int money){
             //환율 계산 결과
             double exchang_result = rate_value * money;
 
-            printf("계산결과: %f ", exchang_result);
+            printf("매매기준 환전 계산결과: %f ", exchang_result);
             printf("%s\n", selectCode);
-
+            bankFeeCal(exchang_result, selectCode);
+            json_object_put(jobj);
         }
     }
-
     free(url);
     free(response_buf);
 }
@@ -287,8 +305,8 @@ int main() {
         printf("돈입력(%s):",select_Code_Value);
         scanf("%d", &money);
 
-        printf("나의돈 코드:%s\n", select_Code_Value);
-        printf("바꿀돈 코드:%s\n", target_Code_Value);
+        //printf("나의돈 코드:%s\n", select_Code_Value);
+        //printf("바꿀돈 코드:%s\n", target_Code_Value);
 
         //KRW 베이스 돈,USD 환전하려는 나라의 돈,5000 얼마나 환전할건지
         exchange_api_request(select_Code_Value, target_Code_Value, money);
