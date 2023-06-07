@@ -6,7 +6,10 @@
 #include <stdlib.h>    // malloc, free 함수가 선언된 헤더 파일
 #include <time.h>
 
+
+//유지보수
 char* baseUrl = "https://nginx-nginx-r8xoo2mleehqmty.sel3.cloudtype.app/rate/";
+
 
 struct CurrencyCode
 {
@@ -26,6 +29,7 @@ size_t write_callback(char* ptr, size_t size, size_t nmemb, void* userdata) {
 
 struct CurrencyCode initStruct() {
     struct CurrencyCode code;
+
     strcpy(code.JPY,"JPY");
     strcpy(code.KRW, "KRW");
     strcpy(code.USD, "USD");
@@ -176,6 +180,77 @@ void bankFeeCal(double money,char* selectCode) {
 
 }
 
+void failRequest(char* currencyCode, char* selectCode,int money) {
+    // currencyCode 현재 나의 돈 국가코드
+    // selectCode 환전하려는 나라의 돈 국가코드
+    // money 현재 나의 돈의 량
+
+    FILE* saveFile;
+    char* file_name;
+    file_name= fileName_String(currencyCode);
+    printf("파일이름:%s\n", file_name);
+    saveFile =fopen(file_name, "r");
+    if (saveFile!=NULL) {
+        //파일 사이즈 변수
+        int fileSize=0;
+       
+        //파일에서 글자를 받아와서 저장할 변수
+        char *bufferString;
+        
+        //환율 비율 변수
+        double rate_value;
+
+        //환율 계산 결과값을 저장하기 위한 변수
+        double exchang_result = 0;
+
+        //파일끝으로 이동
+        fseek(saveFile, 0, SEEK_END);
+        //파일사이즈 구하기 위한 함수
+        fileSize = ftell(saveFile);
+        fseek(saveFile, 0, SEEK_SET);
+
+        //printf("파일크기:%d\n", fileSize);
+
+        bufferString = (char*)malloc(fileSize+20);
+
+        fgets(bufferString, fileSize+10, saveFile);
+        
+        //printf("파일내용:%s\n", bufferString);
+      
+        //전체 json 값을 저장하기 위한 변수
+        struct json_object* jobj= json_tokener_parse(bufferString);
+
+        //전체 json 값중에서 환율 비율만 저장하기 위한 변수
+        struct json_object* rate_obj;
+
+        //선택한 국가의 환율 비율만 저장하기 위한 변수
+        struct json_object* select_rate;
+
+        json_object_object_get_ex(jobj, "rates", &rate_obj);
+        
+        json_object_object_get_ex(rate_obj, selectCode, &select_rate);
+
+        rate_value = json_object_get_double(select_rate);
+
+        exchang_result = money * rate_value;
+
+        printf("매매기준 환전 계산결과: %f ", exchang_result);
+        printf("%s\n",selectCode);
+
+        bankFeeCal(exchang_result, selectCode);
+
+
+        json_object_put(jobj);
+        free(bufferString);
+        free(file_name);
+        fclose(saveFile);
+    }
+    else {
+        printf("인터넷 연결에 문제가 발생했습니다.\n");
+        printf("인터넷 연결에 문제가 없는지 확인해 주세요.\n");
+    }
+}
+
 //환율 api 호출해서 값 불러오고 가져와서 계산하는 함수
 void exchange_api_request(char *currencyCode,char* selectCode,int money){
     //printf("%s\n", currencyCode);
@@ -230,8 +305,10 @@ void exchange_api_request(char *currencyCode,char* selectCode,int money){
             
             printf("요청실패\n");
 
+            failRequest(currencyCode,selectCode, money);
+
             //요청 실패시 실행
-            fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+            //fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
             
         }
         else {
@@ -304,9 +381,6 @@ int main() {
 
         printf("돈입력(%s):",select_Code_Value);
         scanf("%d", &money);
-
-        //printf("나의돈 코드:%s\n", select_Code_Value);
-        //printf("바꿀돈 코드:%s\n", target_Code_Value);
 
         //KRW 베이스 돈,USD 환전하려는 나라의 돈,5000 얼마나 환전할건지
         exchange_api_request(select_Code_Value, target_Code_Value, money);
