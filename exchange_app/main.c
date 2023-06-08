@@ -251,6 +251,118 @@ void failRequest(char* currencyCode, char* selectCode,int money) {
     }
 }
 
+
+void exchange_trends(double exchang_result ,char* currencyCode,char* selectCode,int money) {
+    printf("현재 환전:%f(%s)\n", exchang_result, selectCode);
+    
+    int currency_con_KRW = strcmp(currencyCode, "KRW");
+    int currency_con_USD = strcmp(currencyCode, "USD");
+    int currency_con_JPY = strcmp(currencyCode, "JPY");
+
+    int selectCode_con_KRW = strcmp(selectCode, "KRW");
+    int selectCode_con_USD = strcmp(selectCode, "USD");
+    int selectCode_con_JPY = strcmp(selectCode, "JPY");
+
+    if (currency_con_KRW==0) {
+        printf("테스트\n");
+        if (selectCode_con_USD ==0) {
+            double ex_sum = 0;
+            double KRW_EX_USD[5] = { 0.000767, 0.000766,  0.000765,  0.000764,  0.000763 };
+            for (int i = 0; i < 5; i++) {
+                ex_sum =ex_sum+(money * KRW_EX_USD[i]);
+            }
+            printf("현재 %s 평균환율:%f\n", selectCode, ex_sum / 5);
+            
+            if (exchang_result > ex_sum) {
+                printf("전일 평균대비 환율상승\n");
+            }
+            else {
+                printf("전일 평균대비 환율하락\n");
+            }
+        }
+        else if (selectCode_con_JPY == 0) {
+            double ex_sum = 0;
+            double KRW_EX_JPY[5] = { 0.107154, 0.107153,  0.107151,  0.107152,  0.107156 };
+            for (int i = 0; i < 5; i++) {
+                ex_sum = ex_sum + (money * KRW_EX_JPY[i]);
+            }
+            printf("현재 %s 평균환율:%f\n", selectCode, ex_sum / 5);
+
+            if (exchang_result > ex_sum) {
+                printf("전일 평균대비 환율상승\n");
+            }
+            else {
+                printf("전일 평균대비 환율하락\n");
+            }
+        }
+        
+    }else if (currency_con_USD == 0) {
+
+        if (selectCode_con_KRW == 0) {
+            double ex_sum = 0;
+            double USD_EX_KRW[5] = { 1302.580201, 1311.580201,1303.580201, 1308.580201, 1291.580201 };
+            for (int i = 0; i < 5; i++) {
+                ex_sum = ex_sum + (money * USD_EX_KRW[i]);
+            }
+            printf("현재 %s 평균환율:%f\n", selectCode, ex_sum / 5);
+
+            if (exchang_result > ex_sum) {
+                printf("전일 평균대비 환율상승\n");
+            }
+            else {
+                printf("전일 평균대비 환율하락\n");
+            }
+        }
+        else if (selectCode_con_JPY == 0) {
+            double ex_sum = 0;
+            double USD_EX_JPY[5] = { 9.322149, 9.322148,  9.322145, 9.3221473,  9.322143 };
+            for (int i = 0; i < 5; i++) {
+                ex_sum = ex_sum + (money * USD_EX_JPY[i]);
+            }
+            printf("현재 %s 평균환율:%f\n", selectCode, ex_sum / 5);
+
+            if (exchang_result > ex_sum) {
+                printf("전일 평균대비 환율상승\n");
+            }
+            else {
+                printf("전일 평균대비 환율하락\n");
+            }
+        }
+
+    }else if (currency_con_JPY == 0) {
+        if (selectCode_con_KRW == 0) {
+            double ex_sum = 0;
+            double JPY_EX_KRW[5] = { 9.322149, 9.322148,  9.322145, 9.322147,  9.322143 };
+            for (int i = 0; i < 5; i++) {
+                ex_sum = ex_sum + (money * JPY_EX_KRW[i]);
+            }
+            printf("현재 %s 평균환율:%f\n", selectCode, ex_sum / 5);
+
+            if (exchang_result > ex_sum) {
+                printf("전일 평균대비 환율상승\n");
+            }
+            else {
+                printf("전일 평균대비 환율하락\n");
+            }
+        }
+        else if (selectCode_con_USD == 0) {
+            double ex_sum = 0;
+            double JPY_EX_USD[5] = { 0.007159, 0.007154,  0.007153,  0.007153,  0.007152 };
+            for (int i = 0; i < 5; i++) {
+                ex_sum = ex_sum + (money * JPY_EX_USD[i]);
+            }
+            printf("현재 %s 평균환율:%f\n", selectCode, ex_sum / 5);
+
+            if (exchang_result > ex_sum) {
+                printf("전일 평균대비 환율상승\n");
+            }
+            else {
+                printf("전일 평균대비 환율하락\n");
+            }
+        }
+    }
+}
+
 //환율 api 호출해서 값 불러오고 가져와서 계산하는 함수
 void exchange_api_request(char *currencyCode,char* selectCode,int money){
     //printf("%s\n", currencyCode);
@@ -350,6 +462,8 @@ void exchange_api_request(char *currencyCode,char* selectCode,int money){
             printf("매매기준 환전 계산결과: %f ", exchang_result);
             printf("%s\n", selectCode);
             bankFeeCal(exchang_result, selectCode);
+            exchange_trends(exchang_result, currencyCode, selectCode, money);
+
             json_object_put(jobj);
         }
     }
